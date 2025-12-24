@@ -467,21 +467,21 @@
     <div class="stats-bar">
         <div class="stat">
             <span class="stat-label">Alerts:</span>
-            <span class="stat-value" id="total-alerts">4</span>
+            <span class="stat-value" id="total-alerts">0</span>
         </div>
         <div class="stat">
             <span class="severity-dot severity-high"></span>
-            <span id="high-count">1</span>
+            <span id="high-count">0</span>
         </div>
         <div class="stat">
             <span class="severity-dot severity-medium"></span>
-            <span id="medium-count">1</span>
+            <span id="medium-count">0</span>
         </div>
         <div class="stat">
             <span class="severity-dot severity-positive"></span>
-            <span id="positive-count">1</span>
+            <span id="positive-count">0</span>
         </div>
-        <div class="status" id="status">● LIVE</div>
+        <div class="status demo" id="status">○ AWAITING SPRING DATA</div>
     </div>
     
     <!-- Map -->
@@ -531,54 +531,40 @@
                     <div class="report-stat-label">TOTAL ACRES</div>
                 </div>
                 <div class="report-stat">
-                    <div class="report-stat-value" style="color: #22c55e;">94%</div>
-                    <div class="report-stat-label">HEALTHY</div>
+                    <div class="report-stat-value" style="color: #6a8a72;">--</div>
+                    <div class="report-stat-label">HEALTHY %</div>
                 </div>
                 <div class="report-stat">
-                    <div class="report-stat-value" style="color: #f59e0b;">88</div>
+                    <div class="report-stat-value" style="color: #6a8a72;">--</div>
                     <div class="report-stat-label">ACRES FLAGGED</div>
                 </div>
             </div>
             <div class="health-bar">
-                <div style="width: 94%; background: #22c55e;"></div>
-                <div style="width: 4%; background: #f59e0b;"></div>
-                <div style="width: 2%; background: #ef4444;"></div>
+                <div style="width: 100%; background: #3a4a42;"></div>
             </div>
         </div>
         
         <div class="report-card">
-            <h3 class="report-section-title">LAST 30 DAYS</h3>
-            <div class="report-row">
-                <span class="report-row-label">🌪️ Storm damage</span>
-                <span class="report-row-value" style="color: #ef4444;">45 acres</span>
-            </div>
-            <div class="report-row">
-                <span class="report-row-label">🌿 Vegetation stress</span>
-                <span class="report-row-value" style="color: #f59e0b;">12 acres</span>
-            </div>
-            <div class="report-row">
-                <span class="report-row-label">🪓 Clearings detected</span>
-                <span class="report-row-value" style="color: #3b82f6;">3 acres</span>
-            </div>
-            <div class="report-row">
-                <span class="report-row-label">🌱 Recovery observed</span>
-                <span class="report-row-value" style="color: #22c55e;">28 acres</span>
-            </div>
+            <h3 class="report-section-title">CURRENT STATUS</h3>
+            <p style="color: #8aa892; font-size: 13px; line-height: 1.6;">
+                ❄️ Winter conditions - satellite imagery shows snow cover.<br><br>
+                Forest change detection requires vegetation to be visible. Analysis will resume when snow melts (April-May 2025).
+            </p>
         </div>
         
         <div class="report-card">
             <h3 class="report-section-title">DATA SOURCES</h3>
             <div class="report-row">
-                <span class="report-row-label">Sentinel-2 passes</span>
-                <span class="report-row-value" style="color: #4d8a5d;">6 this month</span>
+                <span class="report-row-label">Sentinel-2 satellite</span>
+                <span class="report-row-value" style="color: #4d8a5d;">Connected</span>
             </div>
             <div class="report-row">
-                <span class="report-row-label">Last imagery</span>
-                <span class="report-row-value" style="color: #8aa892;">Dec 22, 2024</span>
+                <span class="report-row-label">Coverage</span>
+                <span class="report-row-value" style="color: #8aa892;">Every 5 days</span>
             </div>
             <div class="report-row">
-                <span class="report-row-label">Next pass</span>
-                <span class="report-row-value" style="color: #8aa892;">Dec 27, 2024</span>
+                <span class="report-row-label">Resolution</span>
+                <span class="report-row-value" style="color: #8aa892;">10 meters</span>
             </div>
         </div>
     </div>
@@ -607,56 +593,10 @@
         // RED LAKE FOREST WATCH - Main Application
         // ============================================
         
-        // Alert Data (will come from API/database in production)
+        // Alert Data (will come from satellite_processor.py when imagery is available)
         const alerts = [
-            {
-                id: 1,
-                type: 'storm_damage',
-                lat: 47.72,
-                lng: -95.08,
-                date: '2024-12-20',
-                severity: 'high',
-                area_acres: 45,
-                description: 'Possible wind damage detected - significant canopy loss in southern forest',
-                icon: '🌪️',
-                label: 'Storm Damage'
-            },
-            {
-                id: 2,
-                type: 'vegetation_change',
-                lat: 48.05,
-                lng: -94.65,
-                date: '2024-12-18',
-                severity: 'medium',
-                area_acres: 12,
-                description: 'Vegetation stress detected near northeast boundary',
-                icon: '🌿',
-                label: 'Vegetation Change'
-            },
-            {
-                id: 3,
-                type: 'clearing',
-                lat: 47.95,
-                lng: -94.55,
-                date: '2024-12-15',
-                severity: 'low',
-                area_acres: 3,
-                description: 'Small clearing detected - verify if authorized',
-                icon: '🪓',
-                label: 'Clearing Detected'
-            },
-            {
-                id: 4,
-                type: 'recovery',
-                lat: 47.55,
-                lng: -95.25,
-                date: '2024-12-10',
-                severity: 'positive',
-                area_acres: 28,
-                description: 'Vegetation recovery observed from previous damage',
-                icon: '🌱',
-                label: 'Recovery'
-            }
+            // Real alerts will populate here from output/alerts.json
+            // Currently empty - waiting for spring imagery
         ];
         
         // Red Lake Reservation boundary - load from GeoJSON
@@ -839,6 +779,19 @@
         // Render alerts list
         function renderAlertsList() {
             const container = document.getElementById('alerts-list');
+            if (alerts.length === 0) {
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 40px 20px; color: #6a8a72;">
+                        <div style="font-size: 48px; margin-bottom: 16px;">❄️</div>
+                        <h3 style="color: #8aa892; margin-bottom: 8px;">No Alerts Yet</h3>
+                        <p style="font-size: 13px; line-height: 1.5;">
+                            Winter snow cover prevents vegetation analysis.<br>
+                            Alerts will appear when spring imagery is available.
+                        </p>
+                    </div>
+                `;
+                return;
+            }
             container.innerHTML = alerts.map(alert => `
                 <div class="alert-card ${alert.severity}" onclick="showAlertOnMap(${alert.id})">
                     <div class="alert-card-header">
