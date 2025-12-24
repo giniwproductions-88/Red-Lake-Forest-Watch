@@ -1,0 +1,900 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Red Lake Forest Watch</title>
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0a0f0d;
+            color: #e8efe8;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        /* Header */
+        header {
+            background: linear-gradient(180deg, #1a2420 0%, #0d1210 100%);
+            border-bottom: 1px solid #2a3a32;
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            z-index: 1000;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .logo-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            background: linear-gradient(135deg, #2d5a3d 0%, #1a3d28 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            border: 1px solid #3d6a4d;
+        }
+        
+        .logo h1 {
+            font-size: 15px;
+            font-weight: 600;
+        }
+        
+        .logo p {
+            font-size: 10px;
+            color: #6a8a72;
+            letter-spacing: 0.5px;
+        }
+        
+        .settings-btn {
+            background: transparent;
+            border: 1px solid #3a4a42;
+            border-radius: 6px;
+            padding: 8px 12px;
+            color: #8aa892;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        .settings-btn:hover, .settings-btn.active {
+            background: #2d5a3d;
+        }
+        
+        /* Stats Bar */
+        .stats-bar {
+            background: #0d1210;
+            border-bottom: 1px solid #1a2420;
+            padding: 10px 16px;
+            display: flex;
+            gap: 16px;
+            overflow-x: auto;
+            flex-shrink: 0;
+        }
+        
+        .stat {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+            white-space: nowrap;
+        }
+        
+        .stat-label { color: #6a8a72; }
+        .stat-value { color: #e8efe8; font-weight: 600; font-size: 13px; }
+        
+        .severity-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+        
+        .severity-high { background: #ef4444; }
+        .severity-medium { background: #f59e0b; }
+        .severity-low { background: #3b82f6; }
+        .severity-positive { background: #22c55e; }
+        
+        .status {
+            margin-left: auto;
+            font-size: 11px;
+            color: #4d8a5d;
+        }
+        
+        .status.demo { color: #f59e0b; }
+        
+        /* Map Container */
+        #map {
+            flex: 1;
+            z-index: 1;
+        }
+        
+        /* Custom Leaflet styles */
+        .leaflet-container {
+            background: #0a0f0d;
+        }
+        
+        .custom-marker {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            border: 2px solid white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.4);
+            font-size: 14px;
+            cursor: pointer;
+        }
+        
+        .marker-high { background: #ef4444; }
+        .marker-medium { background: #f59e0b; }
+        .marker-low { background: #3b82f6; }
+        .marker-positive { background: #22c55e; }
+        
+        /* Alert Panel */
+        .alert-panel {
+            position: absolute;
+            bottom: 70px;
+            left: 12px;
+            right: 12px;
+            background: #141a18;
+            border-radius: 12px;
+            padding: 14px;
+            z-index: 1000;
+            box-shadow: 0 -4px 20px rgba(0,0,0,0.5);
+            display: none;
+        }
+        
+        .alert-panel.active {
+            display: block;
+        }
+        
+        .alert-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 10px;
+        }
+        
+        .alert-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .alert-icon { font-size: 24px; }
+        
+        .alert-title {
+            font-size: 14px;
+            font-weight: 600;
+            margin: 0;
+        }
+        
+        .alert-meta {
+            font-size: 11px;
+            color: #6a8a72;
+            margin: 2px 0 0 0;
+        }
+        
+        .alert-coords {
+            font-size: 10px;
+            color: #5a6a62;
+            margin: 2px 0 0 0;
+        }
+        
+        .close-btn {
+            background: transparent;
+            border: none;
+            color: #6a8a72;
+            font-size: 20px;
+            cursor: pointer;
+        }
+        
+        .alert-description {
+            font-size: 12px;
+            color: #a8b8a8;
+            line-height: 1.5;
+            margin: 0 0 12px 0;
+        }
+        
+        .alert-actions {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .btn {
+            flex: 1;
+            padding: 12px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            text-transform: uppercase;
+        }
+        
+        .btn-primary {
+            background: #2d5a3d;
+            border: none;
+            color: #e8efe8;
+        }
+        
+        .btn-secondary {
+            background: transparent;
+            border: 1px solid #3a4a42;
+            color: #8aa892;
+        }
+        
+        /* Bottom Nav */
+        nav {
+            background: #141a18;
+            border-top: 1px solid #2a3a32;
+            padding: 8px 0;
+            display: flex;
+            justify-content: space-around;
+            flex-shrink: 0;
+            z-index: 1000;
+        }
+        
+        .nav-btn {
+            background: transparent;
+            border: none;
+            color: #5a6a62;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            padding: 8px 24px;
+            cursor: pointer;
+        }
+        
+        .nav-btn.active {
+            color: #4d8a5d;
+        }
+        
+        .nav-btn span:first-child { font-size: 20px; }
+        .nav-btn span:last-child { font-size: 10px; }
+        
+        /* Layer Control */
+        .layer-control {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 1000;
+            background: #141a18;
+            border: 1px solid #2a3a32;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        .layer-btn {
+            display: block;
+            width: 100%;
+            padding: 10px 14px;
+            background: transparent;
+            border: none;
+            border-bottom: 1px solid #2a3a32;
+            color: #8aa892;
+            font-size: 11px;
+            cursor: pointer;
+            text-align: left;
+        }
+        
+        .layer-btn:last-child {
+            border-bottom: none;
+        }
+        
+        .layer-btn.active {
+            background: #2d5a3d;
+            color: #e8efe8;
+        }
+        
+        /* Alerts List View */
+        .alerts-view, .reports-view {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 60px;
+            background: #0a0f0d;
+            z-index: 500;
+            overflow-y: auto;
+            padding: 16px;
+            display: none;
+        }
+        
+        .alerts-view.active, .reports-view.active {
+            display: block;
+        }
+        
+        .view-title {
+            font-size: 14px;
+            color: #6a8a72;
+            letter-spacing: 1px;
+            margin-bottom: 16px;
+        }
+        
+        .alert-card {
+            background: #1a2420;
+            border-left: 3px solid;
+            border-radius: 8px;
+            padding: 14px;
+            margin-bottom: 12px;
+            cursor: pointer;
+        }
+        
+        .alert-card.high { border-color: #ef4444; }
+        .alert-card.medium { border-color: #f59e0b; }
+        .alert-card.low { border-color: #3b82f6; }
+        .alert-card.positive { border-color: #22c55e; }
+        
+        .alert-card-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+        
+        .alert-card-icon { font-size: 20px; }
+        
+        .alert-card-title {
+            flex: 1;
+        }
+        
+        .alert-card-title h3 {
+            font-size: 13px;
+            font-weight: 600;
+            margin: 0;
+        }
+        
+        .alert-card-title p {
+            font-size: 10px;
+            color: #6a8a72;
+            margin: 2px 0 0 0;
+        }
+        
+        .severity-badge {
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 9px;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: white;
+        }
+        
+        .severity-badge.high { background: #ef4444; }
+        .severity-badge.medium { background: #f59e0b; }
+        .severity-badge.low { background: #3b82f6; }
+        .severity-badge.positive { background: #22c55e; }
+        
+        .alert-card-desc {
+            font-size: 11px;
+            color: #8aa892;
+            line-height: 1.4;
+            margin: 0;
+        }
+        
+        /* Reports View */
+        .report-card {
+            background: #1a2420;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 16px;
+        }
+        
+        .report-stats {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+        
+        .report-stat {
+            text-align: center;
+        }
+        
+        .report-stat-value {
+            font-size: 28px;
+            font-weight: 700;
+        }
+        
+        .report-stat-label {
+            font-size: 10px;
+            color: #6a8a72;
+            margin-top: 4px;
+        }
+        
+        .health-bar {
+            height: 8px;
+            background: #0d1210;
+            border-radius: 4px;
+            overflow: hidden;
+            display: flex;
+        }
+        
+        .report-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+        }
+        
+        .report-row-label {
+            font-size: 12px;
+            color: #8aa892;
+        }
+        
+        .report-row-value {
+            font-size: 14px;
+            font-weight: 600;
+        }
+        
+        .report-section-title {
+            font-size: 12px;
+            color: #8aa892;
+            margin-bottom: 16px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <div class="logo">
+            <div class="logo-icon">🌲</div>
+            <div>
+                <h1>Red Lake Forest Watch</h1>
+                <p>Miskwaagamiiwi-zaaga'igan</p>
+            </div>
+        </div>
+        <button class="settings-btn" onclick="toggleSettings()">⚙️</button>
+    </header>
+    
+    <!-- Stats Bar -->
+    <div class="stats-bar">
+        <div class="stat">
+            <span class="stat-label">Alerts:</span>
+            <span class="stat-value" id="total-alerts">4</span>
+        </div>
+        <div class="stat">
+            <span class="severity-dot severity-high"></span>
+            <span id="high-count">1</span>
+        </div>
+        <div class="stat">
+            <span class="severity-dot severity-medium"></span>
+            <span id="medium-count">1</span>
+        </div>
+        <div class="stat">
+            <span class="severity-dot severity-positive"></span>
+            <span id="positive-count">1</span>
+        </div>
+        <div class="status" id="status">● LIVE</div>
+    </div>
+    
+    <!-- Map -->
+    <div id="map"></div>
+    
+    <!-- Layer Control -->
+    <div class="layer-control" id="layer-control">
+        <button class="layer-btn active" onclick="setLayer('satellite')">🛰️ Satellite</button>
+        <button class="layer-btn" onclick="setLayer('ndvi')">🌿 NDVI</button>
+        <button class="layer-btn" onclick="setLayer('change')">📊 Change</button>
+    </div>
+    
+    <!-- Alert Panel -->
+    <div class="alert-panel" id="alert-panel">
+        <div class="alert-header">
+            <div class="alert-info">
+                <span class="alert-icon" id="panel-icon">🌪️</span>
+                <div>
+                    <h3 class="alert-title" id="panel-title">Storm Damage</h3>
+                    <p class="alert-meta" id="panel-meta">Dec 20, 2024 • 45 acres</p>
+                    <p class="alert-coords" id="panel-coords">47.7200°N, 95.0800°W</p>
+                </div>
+            </div>
+            <button class="close-btn" onclick="closePanel()">✕</button>
+        </div>
+        <p class="alert-description" id="panel-desc">Possible wind damage detected - significant canopy loss in southern forest</p>
+        <div class="alert-actions">
+            <button class="btn btn-primary" onclick="navigateToAlert()">📍 Navigate</button>
+            <button class="btn btn-secondary" onclick="showBeforeAfter()">📸 Before/After</button>
+        </div>
+    </div>
+    
+    <!-- Alerts View -->
+    <div class="alerts-view" id="alerts-view">
+        <h2 class="view-title">RECENT ALERTS</h2>
+        <div id="alerts-list"></div>
+    </div>
+    
+    <!-- Reports View -->
+    <div class="reports-view" id="reports-view">
+        <h2 class="view-title">FOREST HEALTH SUMMARY</h2>
+        
+        <div class="report-card">
+            <div class="report-stats">
+                <div class="report-stat">
+                    <div class="report-stat-value" style="color: #4d8a5d;">840K</div>
+                    <div class="report-stat-label">TOTAL ACRES</div>
+                </div>
+                <div class="report-stat">
+                    <div class="report-stat-value" style="color: #22c55e;">94%</div>
+                    <div class="report-stat-label">HEALTHY</div>
+                </div>
+                <div class="report-stat">
+                    <div class="report-stat-value" style="color: #f59e0b;">88</div>
+                    <div class="report-stat-label">ACRES FLAGGED</div>
+                </div>
+            </div>
+            <div class="health-bar">
+                <div style="width: 94%; background: #22c55e;"></div>
+                <div style="width: 4%; background: #f59e0b;"></div>
+                <div style="width: 2%; background: #ef4444;"></div>
+            </div>
+        </div>
+        
+        <div class="report-card">
+            <h3 class="report-section-title">LAST 30 DAYS</h3>
+            <div class="report-row">
+                <span class="report-row-label">🌪️ Storm damage</span>
+                <span class="report-row-value" style="color: #ef4444;">45 acres</span>
+            </div>
+            <div class="report-row">
+                <span class="report-row-label">🌿 Vegetation stress</span>
+                <span class="report-row-value" style="color: #f59e0b;">12 acres</span>
+            </div>
+            <div class="report-row">
+                <span class="report-row-label">🪓 Clearings detected</span>
+                <span class="report-row-value" style="color: #3b82f6;">3 acres</span>
+            </div>
+            <div class="report-row">
+                <span class="report-row-label">🌱 Recovery observed</span>
+                <span class="report-row-value" style="color: #22c55e;">28 acres</span>
+            </div>
+        </div>
+        
+        <div class="report-card">
+            <h3 class="report-section-title">DATA SOURCES</h3>
+            <div class="report-row">
+                <span class="report-row-label">Sentinel-2 passes</span>
+                <span class="report-row-value" style="color: #4d8a5d;">6 this month</span>
+            </div>
+            <div class="report-row">
+                <span class="report-row-label">Last imagery</span>
+                <span class="report-row-value" style="color: #8aa892;">Dec 22, 2024</span>
+            </div>
+            <div class="report-row">
+                <span class="report-row-label">Next pass</span>
+                <span class="report-row-value" style="color: #8aa892;">Dec 27, 2024</span>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Bottom Nav -->
+    <nav>
+        <button class="nav-btn active" id="nav-map" onclick="showView('map')">
+            <span>🗺️</span>
+            <span>Map</span>
+        </button>
+        <button class="nav-btn" id="nav-alerts" onclick="showView('alerts')">
+            <span>🔔</span>
+            <span>Alerts</span>
+        </button>
+        <button class="nav-btn" id="nav-reports" onclick="showView('reports')">
+            <span>📊</span>
+            <span>Reports</span>
+        </button>
+    </nav>
+    
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <script>
+        // ============================================
+        // RED LAKE FOREST WATCH - Main Application
+        // ============================================
+        
+        // Alert Data (will come from API/database in production)
+        const alerts = [
+            {
+                id: 1,
+                type: 'storm_damage',
+                lat: 47.72,
+                lng: -95.08,
+                date: '2024-12-20',
+                severity: 'high',
+                area_acres: 45,
+                description: 'Possible wind damage detected - significant canopy loss in southern forest',
+                icon: '🌪️',
+                label: 'Storm Damage'
+            },
+            {
+                id: 2,
+                type: 'vegetation_change',
+                lat: 48.05,
+                lng: -94.65,
+                date: '2024-12-18',
+                severity: 'medium',
+                area_acres: 12,
+                description: 'Vegetation stress detected near northeast boundary',
+                icon: '🌿',
+                label: 'Vegetation Change'
+            },
+            {
+                id: 3,
+                type: 'clearing',
+                lat: 47.95,
+                lng: -94.55,
+                date: '2024-12-15',
+                severity: 'low',
+                area_acres: 3,
+                description: 'Small clearing detected - verify if authorized',
+                icon: '🪓',
+                label: 'Clearing Detected'
+            },
+            {
+                id: 4,
+                type: 'recovery',
+                lat: 47.55,
+                lng: -95.25,
+                date: '2024-12-10',
+                severity: 'positive',
+                area_acres: 28,
+                description: 'Vegetation recovery observed from previous damage',
+                icon: '🌱',
+                label: 'Recovery'
+            }
+        ];
+        
+        // Red Lake Reservation boundary - load from GeoJSON
+        let reservationBoundary = null;
+        
+        // Load boundary file
+        fetch('red_lake_boundary.geojson')
+            .then(response => response.json())
+            .then(data => {
+                reservationBoundary = data;
+                
+                // Add reservation boundary to map
+                const boundaryFeature = data.features.find(f => f.properties.name.includes('Reservation'));
+                if (boundaryFeature) {
+                    L.geoJSON(boundaryFeature, {
+                        style: {
+                            color: '#ef4444',
+                            weight: 3,
+                            opacity: 0.9,
+                            fillColor: '#2d5a3d',
+                            fillOpacity: 0.1,
+                            dashArray: '10, 5'
+                        }
+                    }).addTo(map);
+                }
+                
+                // Add lakes
+                const lakes = data.features.filter(f => f.properties.type === 'water');
+                lakes.forEach(lake => {
+                    L.geoJSON(lake, {
+                        style: {
+                            color: '#3a7090',
+                            weight: 1,
+                            fillColor: '#1e5078',
+                            fillOpacity: 0.5
+                        }
+                    }).addTo(map);
+                });
+                
+                // Update status
+                document.getElementById('status').textContent = '● LIVE';
+                document.getElementById('status').classList.remove('demo');
+            })
+            .catch(err => {
+                console.log('Boundary file not found, using demo mode');
+                document.getElementById('status').textContent = '○ DEMO';
+                document.getElementById('status').classList.add('demo');
+            });
+        
+        // Red Lake center coordinates
+        const RED_LAKE_CENTER = [47.88, -94.90];
+        const DEFAULT_ZOOM = 9;
+        
+        // Initialize map
+        const map = L.map('map', {
+            zoomControl: false
+        }).setView(RED_LAKE_CENTER, DEFAULT_ZOOM);
+        
+        // Tile layers
+        const layers = {
+            satellite: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+                attribution: 'Esri World Imagery'
+            }),
+            // NDVI would come from processed Sentinel-2 data
+            ndvi: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+                attribution: 'NDVI Layer (placeholder)'
+            }),
+            // Change detection layer
+            change: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+                attribution: 'Change Detection (placeholder)'
+            })
+        };
+        
+        // Add default layer
+        layers.satellite.addTo(map);
+        let currentLayer = 'satellite';
+        
+        // Add zoom control to bottom left
+        L.control.zoom({ position: 'bottomleft' }).addTo(map);
+        
+        // Create custom marker icons
+        function createMarkerIcon(severity, icon) {
+            const colors = {
+                high: '#ef4444',
+                medium: '#f59e0b',
+                low: '#3b82f6',
+                positive: '#22c55e'
+            };
+            
+            return L.divIcon({
+                className: 'custom-div-icon',
+                html: `<div class="custom-marker marker-${severity}" style="width: 32px; height: 32px; background: ${colors[severity]};">${icon}</div>`,
+                iconSize: [32, 32],
+                iconAnchor: [16, 16]
+            });
+        }
+        
+        // Add alert markers to map
+        const markers = [];
+        alerts.forEach(alert => {
+            const marker = L.marker([alert.lat, alert.lng], {
+                icon: createMarkerIcon(alert.severity, alert.icon)
+            }).addTo(map);
+            
+            marker.on('click', () => showAlertPanel(alert));
+            markers.push({ marker, alert });
+        });
+        
+        // Show alert panel
+        function showAlertPanel(alert) {
+            document.getElementById('panel-icon').textContent = alert.icon;
+            document.getElementById('panel-title').textContent = alert.label;
+            document.getElementById('panel-meta').textContent = `${alert.date} • ${alert.area_acres} acres`;
+            document.getElementById('panel-coords').textContent = `${alert.lat.toFixed(4)}°N, ${Math.abs(alert.lng).toFixed(4)}°W`;
+            document.getElementById('panel-desc').textContent = alert.description;
+            document.getElementById('alert-panel').style.borderColor = {
+                high: '#ef4444',
+                medium: '#f59e0b',
+                low: '#3b82f6',
+                positive: '#22c55e'
+            }[alert.severity];
+            document.getElementById('alert-panel').classList.add('active');
+            
+            // Store current alert for navigation
+            window.currentAlert = alert;
+        }
+        
+        // Close alert panel
+        function closePanel() {
+            document.getElementById('alert-panel').classList.remove('active');
+        }
+        
+        // Navigate to alert
+        function navigateToAlert() {
+            if (window.currentAlert) {
+                // Open in Google Maps or device navigation
+                const url = `https://www.google.com/maps/dir/?api=1&destination=${window.currentAlert.lat},${window.currentAlert.lng}`;
+                window.open(url, '_blank');
+            }
+        }
+        
+        // Show before/after (placeholder)
+        function showBeforeAfter() {
+            alert('Before/After imagery will be available when connected to Sentinel-2 data');
+        }
+        
+        // Switch layers
+        function setLayer(layerName) {
+            map.removeLayer(layers[currentLayer]);
+            layers[layerName].addTo(map);
+            currentLayer = layerName;
+            
+            // Update button states
+            document.querySelectorAll('.layer-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+        }
+        
+        // View switching
+        function showView(view) {
+            // Update nav buttons
+            document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(`nav-${view}`).classList.add('active');
+            
+            // Show/hide views
+            document.getElementById('alerts-view').classList.remove('active');
+            document.getElementById('reports-view').classList.remove('active');
+            document.getElementById('layer-control').style.display = view === 'map' ? 'block' : 'none';
+            
+            if (view === 'alerts') {
+                document.getElementById('alerts-view').classList.add('active');
+                renderAlertsList();
+            } else if (view === 'reports') {
+                document.getElementById('reports-view').classList.add('active');
+            }
+            
+            // Close alert panel when switching views
+            closePanel();
+        }
+        
+        // Render alerts list
+        function renderAlertsList() {
+            const container = document.getElementById('alerts-list');
+            container.innerHTML = alerts.map(alert => `
+                <div class="alert-card ${alert.severity}" onclick="showAlertOnMap(${alert.id})">
+                    <div class="alert-card-header">
+                        <span class="alert-card-icon">${alert.icon}</span>
+                        <div class="alert-card-title">
+                            <h3>${alert.label}</h3>
+                            <p>${alert.date} • ${alert.area_acres} acres</p>
+                        </div>
+                        <span class="severity-badge ${alert.severity}">${alert.severity}</span>
+                    </div>
+                    <p class="alert-card-desc">${alert.description}</p>
+                </div>
+            `).join('');
+        }
+        
+        // Show alert on map from list
+        function showAlertOnMap(alertId) {
+            const alert = alerts.find(a => a.id === alertId);
+            if (alert) {
+                showView('map');
+                map.setView([alert.lat, alert.lng], 12);
+                showAlertPanel(alert);
+            }
+        }
+        
+        // Toggle settings (placeholder)
+        function toggleSettings() {
+            alert('Settings panel - Layer controls are on the map');
+        }
+        
+        // Update stats display
+        function updateStats() {
+            const stats = {
+                total: alerts.length,
+                high: alerts.filter(a => a.severity === 'high').length,
+                medium: alerts.filter(a => a.severity === 'medium').length,
+                positive: alerts.filter(a => a.severity === 'positive').length
+            };
+            
+            document.getElementById('total-alerts').textContent = stats.total;
+            document.getElementById('high-count').textContent = stats.high;
+            document.getElementById('medium-count').textContent = stats.medium;
+            document.getElementById('positive-count').textContent = stats.positive;
+        }
+        
+        // Initialize
+        updateStats();
+        
+        // ============================================
+        // TODO: Connect to real data sources
+        // ============================================
+        // 1. Load Red Lake boundary GeoJSON
+        // 2. Connect to Sentinel-2 via Google Earth Engine
+        // 3. Set up change detection pipeline
+        // 4. Add real-time alert fetching
+        // ============================================
+    </script>
+</body>
+</html>
