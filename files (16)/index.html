@@ -608,7 +608,7 @@
             .then(data => {
                 reservationBoundary = data;
                 
-                // Add reservation boundary to map
+                // Add reservation boundary to map (just the outline, not the lakes)
                 const boundaryFeature = data.features.find(f => f.properties.name.includes('Reservation'));
                 if (boundaryFeature) {
                     L.geoJSON(boundaryFeature, {
@@ -623,26 +623,13 @@
                     }).addTo(map);
                 }
                 
-                // Add lakes
-                const lakes = data.features.filter(f => f.properties.type === 'water');
-                lakes.forEach(lake => {
-                    L.geoJSON(lake, {
-                        style: {
-                            color: '#3a7090',
-                            weight: 1,
-                            fillColor: '#1e5078',
-                            fillOpacity: 0.5
-                        }
-                    }).addTo(map);
-                });
-                
                 // Update status
-                document.getElementById('status').textContent = '● LIVE';
-                document.getElementById('status').classList.remove('demo');
+                document.getElementById('status').textContent = '○ AWAITING SPRING DATA';
+                document.getElementById('status').classList.add('demo');
             })
             .catch(err => {
                 console.log('Boundary file not found, using demo mode');
-                document.getElementById('status').textContent = '○ DEMO';
+                document.getElementById('status').textContent = '○ NO BOUNDARY';
                 document.getElementById('status').classList.add('demo');
             });
         
